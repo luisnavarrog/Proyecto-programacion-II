@@ -2,6 +2,7 @@ from shiny import App, ui, render
 
 # 1. Interfaz de Usuario (UI)
 app_ui = ui.page_fluid(
+    ui.tags.style("body { background-color: #dbeafe; }"),
     ui.h2("¡Hola, Shiny para Python!"),
     ui.input_slider("n", "Elige un número:", 0, 100, 20),
     ui.output_text_verbatim("txt"),
