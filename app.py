@@ -6,7 +6,9 @@ from pestanas import evolucion, picos, perfil, calor
 # Se carga una sola vez al iniciar la app
 members, expeditions, peaks = cargar_datos()
 
-temporadas = sorted(members["season"].dropna().unique())
+temporadas = sorted(
+    members.loc[members["season"] != "Unknown", "season"].dropna().unique()
+)
 
 app_ui = ui.page_sidebar(
     # Filtros globales: afectan a todas las pestañas
