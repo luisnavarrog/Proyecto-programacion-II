@@ -8,8 +8,3 @@ def panel_ui():
         ui.card_header("Picos"),
         ui.p("Pendiente: aquí va el análisis de los picos."),
     )
-
-
-@module.server
-def panel_server(input, output, session, datos):
-    pass
