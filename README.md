@@ -5,7 +5,7 @@ expediciones y picos del Himalayan Database.
 
 ## Estructura
 
-- `app.py`: interfaz, filtros globales y conexión de las pestañas.
+- `app.py`: interfaz y conexión de las pestañas.
 - `src/datos.py`: carga los archivos CSV una sola vez al iniciar.
 - `pestanas/`: interfaz y lógica de servidor de cada pestaña.
 - `data/`: `members.csv`, `expeditions.csv` y `peaks.csv`.
