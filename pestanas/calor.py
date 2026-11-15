@@ -79,7 +79,7 @@ def panel_server(input, output, session):
         fmt = ",.0f" if metrica == "n" else ".1f"
         etiqueta = METRICAS[metrica]
 
-        fig = go.Figure(
+        fig = go.FigureWidget(
             go.Heatmap(
                 z=z_data,
                 x=z.columns.tolist(),
