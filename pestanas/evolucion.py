@@ -8,8 +8,3 @@ def panel_ui():
         ui.card_header("Evolución temporal"),
         ui.p("Pendiente: aquí va el gráfico."),
     )
-
-
-@module.server
-def panel_server(input, output, session, datos):
-    pass

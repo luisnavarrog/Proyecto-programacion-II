@@ -8,8 +8,3 @@ def panel_ui():
         ui.card_header("Mapa de calor"),
         ui.p("Pendiente: aquí va el mapa de calor."),
     )
-
-
-@module.server
-def panel_server(input, output, session, datos):
-    pass
