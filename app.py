@@ -2,6 +2,7 @@
 from shiny import App, ui
 from src.datos import cargar_datos
 from pestanas import evolucion, picos, perfil, calor
+from pathlib import Path
 
 # Se carga una sola vez al iniciar la app
 members, expeditions, peaks = cargar_datos()
@@ -22,4 +23,8 @@ def server(input, output, session):
     calor.panel_server("calor")
     picos.panel_server("picos")
 
-app = App(app_ui, server)
+app = App(
+    app_ui,
+    server,
+    static_assets=Path(__file__).resolve().parent / "www",
+)
