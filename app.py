@@ -20,6 +20,6 @@ app_ui = ui.page_fluid(
 
 def server(input, output, session):
     calor.panel_server("calor")
-
+    picos.panel_server("picos")
 
 app = App(app_ui, server)
