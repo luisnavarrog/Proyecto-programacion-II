@@ -17,11 +17,31 @@ archivos_picos = {
     "BARU": "baruntse.svg",
     "PUMO": "pumori.svg",
     "ANN1": "annapurna_i.svg",
+    "KANG": "kangchenjunga.svg",
+    "HIML": "himlung_himal.svg",
+    "ANN4": "annapurna_iv.svg",
+    "PUTH": "putha_hiunchuli.svg",
+    "TILI": "tilicho.svg",
+    "NUPT": "nuptse.svg",
+    "TUKU": "tukuche.svg",
+    "JANU": "jannu.svg",
+    "LANG": "langtang_lirung.svg",
+    "MAK2": "makalu_ii.svg",
+    "ANN3": "annapurna_iii.svg",
+    "ANNS": "annapurna_south.svg",
+    "LSHR": "lhotse_shar.svg",
+    "ANN2": "annapurna_ii.svg",
+    "GAUR": "gaurishankar.svg",
+    "KGUR": "kang_guru.svg",
+    "DORJ": "dorje_lhakpa.svg",
+    "GANG": "gangapurna.svg",
+    "KTEG": "kangtega.svg",
+    "TAWO": "tawoche.svg",
 }
 carpeta_imagenes = Path(__file__).resolve().parent.parent / "www" / "imagenes"
 
 
-def preparar_ilustracion(identificador, nombre, altura):
+def preparar_ilustracion(identificador, nombre, altura, elevacion_comparada=None):
     """Devuelve el SVG del pico o su respaldo con el encuadre de la ficha."""
     archivo_svg = carpeta_imagenes / archivos_picos.get(
         identificador, "generica.svg"
@@ -38,6 +58,8 @@ def preparar_ilustracion(identificador, nombre, altura):
         ET.register_namespace("", "http://www.w3.org/2000/svg")
         dibujo = ET.fromstring(archivo_svg.read_text(encoding="utf-8"))
         dibujo.set("viewBox", "45 0 590 335")
+        if elevacion_comparada is not None:
+            dibujo.set("viewBox", "0 0 800 450")
         dibujo.set("width", "100%")
         dibujo.set("role", "img")
         dibujo.set("aria-label", f"{nombre}, {altura}. Silueta ilustrativa.")
@@ -78,6 +100,23 @@ def preparar_ilustracion(identificador, nombre, altura):
             dibujo.remove(parte)
             paisaje.append(parte)
 
+        if elevacion_comparada is not None:
+            # La cima original está en y=61 y la base en y=410
+            # Una elevación de 9000 m ocupa 349 unidades verticales
+            factor = elevacion_comparada / 9000
+            paisaje.set(
+                "transform",
+                f"translate(364 410) scale({factor}) translate(-364 -410)",
+            )
+            # Conservar la figura completa para comparar desde una misma base
+            paisaje.attrib.pop("mask", None)
+            for elemento in efectos.iter():
+                if elemento.tag.endswith("mask") or elemento.tag.endswith("rect"):
+                    elemento.set("x", "0")
+                    elemento.set("y", "0")
+                    elemento.set("width", "800")
+                    elemento.set("height", "450")
+
         laterales = ET.Element(
             "{http://www.w3.org/2000/svg}g",
             {"mask": "url(#picos-mascara-lateral)"},
@@ -85,6 +124,13 @@ def preparar_ilustracion(identificador, nombre, altura):
         laterales.append(paisaje)
         dibujo.append(efectos)
         dibujo.append(laterales)
+
+        if elevacion_comparada is not None:
+            linea_base = ET.SubElement(
+                dibujo,
+                "{http://www.w3.org/2000/svg}path",
+                {"d": "M0 410 H800", "stroke": "#b7c9d7", "stroke-width": "1"},
+            )
 
         # Mostrar la elevación por encima de la cima
         etiqueta = ET.SubElement(
@@ -100,6 +146,8 @@ def preparar_ilustracion(identificador, nombre, altura):
                 "fill": "#24445f",
             },
         )
+        if elevacion_comparada is not None:
+            etiqueta.set("y", str(410 - 349 * factor - 24))
         etiqueta.text = altura
         # Cada ficha necesita identificadores propios para sus máscaras
         nombres_svg = {}
