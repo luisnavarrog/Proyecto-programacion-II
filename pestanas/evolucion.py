@@ -28,5 +28,5 @@ def panel_server(input, output, session, expeditions: pd.DataFrame):
             labels={"year": "Año", "expeditions": "Cantidad de expediciones"},
             title="Expediciones a lo largo del tiempo",
             template="plotly_white",
-            color_discrete_sequence=["#315C8C"],
+            color_discrete_sequence=["#091F39"],
         )
