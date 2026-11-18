@@ -252,6 +252,7 @@ def panel_server(input, output, session):
             automargin=True,
         )
         fig.update_layout(
+            font=dict(color="#FFFFFF"),
             title=dict(
                 text=f"{titulo}<br><sup>{subtitulo}</sup>",
                 x=0,
