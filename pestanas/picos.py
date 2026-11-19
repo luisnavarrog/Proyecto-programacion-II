@@ -241,16 +241,6 @@ def panel_server(input, output, session):
             inicio_catalogo += porcentajes[0]
             inicio_expediciones += porcentajes[1]
 
-        grafico.add_annotation(
-            x=0, y=1.55, xref="paper", yref="y", xanchor="left",
-            text=f"Catálogo: {total_catalogo} montañas con elevación",
-            showarrow=False, yshift=16, yanchor="bottom",
-        )
-        grafico.add_annotation(
-            x=0, y=0.55, xref="paper", yref="y", xanchor="left",
-            text=f"Expediciones con elevación identificada: {total_expediciones}",
-            showarrow=False, yshift=16, yanchor="bottom",
-        )
         if not total_expediciones:
             mensaje = "No hay expediciones con elevación identificada para estos filtros."
             if expediciones_filtradas.empty:
@@ -266,12 +256,12 @@ def panel_server(input, output, session):
             )
         grafico.update_layout(
             barmode="stack",
-            height=500,
+            height=450,
             template="plotly_dark",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="#073642",
             font={"family": "sans-serif", "color": "#e7eff0"},
-            margin={"l": 105, "r": 25, "t": 105, "b": 105},
+            margin={"l": 150, "r": 25, "t": 105, "b": 105},
             legend={
                 "orientation": "h", "x": 0, "y": 1.65,
                 "font": {"size": 12}, "traceorder": "normal",
@@ -284,8 +274,12 @@ def panel_server(input, output, session):
             title="Porcentaje del total de cada grupo", showgrid=False,
         )
         grafico.update_yaxes(
-            range=[-0.45, 1.8], tickvals=[1, 0],
-            ticktext=["Catálogo", "Expediciones"], showgrid=False, zeroline=False,
+            range=[-0.45, 1.6], tickvals=[1, 0],
+            ticktext=[
+                f"<b>Catálogo</b><br>{total_catalogo} montañas",
+                f"<b>Expediciones</b><br>{total_expediciones:,} registros".replace(",", " "),
+            ],
+            ticklabelstandoff=12, showgrid=False, zeroline=False,
         )
         return grafico
 
