@@ -73,15 +73,15 @@ def panel_ui():
             style="max-height: 650px",
         ),
         ui.hr(),
-        ui.h4("¿Las montañas más altas registran más expediciones?"),
+        ui.h4("¿Dónde se concentran las expediciones?"),
         ui.p(
-            "Cada punto representa una montaña. Pasa el cursor para consultar "
-            "su nombre, elevación y expediciones en el período y temporada elegidos."
+            "Compara la distribución de las montañas y las expediciones "
+            "por rango de elevación. Pasa el cursor para consultar las cantidades."
         ),
-        output_widget("dispersion_picos"),
+        output_widget("proporciones_altura"),
         ui.p(
-            "Incluye montañas sin expediciones registradas. "
-            "Pearson y la recta describen la asociación, sin demostrar causalidad.",
+            "El catálogo es una referencia fija. Las expediciones cambian con "
+            "el período y la temporada seleccionados. Cada barra con datos suma 100 %.",
             class_="small text-muted",
         ),
         ui.hr(),
@@ -160,8 +160,8 @@ def panel_server(input, output, session):
         return grafico
 
     @render_widget
-    def dispersion_picos():
-        # Aplicar los mismos filtros que al ranking
+    def proporciones_altura():
+        # Aplicar el período y la temporada a las expediciones
         expediciones_filtradas = expeditions[
             (expeditions["year"] >= input.anios()[0])
             & (expeditions["year"] <= input.anios()[1])
@@ -171,78 +171,121 @@ def panel_server(input, output, session):
                 expediciones_filtradas["season"] == input.temporada()
             ]
 
-        # Contar antes de unir para conservar una fila por montaña
-        conteo = expediciones_filtradas.groupby("peak_id").size()
-        conteo = conteo.reset_index(name="cantidad")
-        datos_dispersion = peaks[["peak_id", "peak_name", "height_metres"]].merge(
-            conteo, on="peak_id", how="left", validate="one_to_one"
+        # Clasificar el catálogo sin cambiar los datos compartidos
+        rangos = [
+            "Menos de 6000 m",
+            "6000 a menos de 7000 m",
+            "7000 a menos de 8000 m",
+            "8000 m o más",
+        ]
+        catalogo = peaks[["peak_id", "height_metres"]].copy()
+        catalogo["rango"] = pd.cut(
+            catalogo["height_metres"],
+            bins=[0, 6000, 7000, 8000, float("inf")],
+            labels=rangos,
+            right=False,
         )
-        datos_dispersion["cantidad"] = datos_dispersion["cantidad"].fillna(0).astype(int)
-        datos_dispersion = datos_dispersion.dropna(subset=["height_metres"])
+        expediciones_altura = expediciones_filtradas[["peak_id"]].merge(
+            catalogo[["peak_id", "rango"]],
+            on="peak_id", how="left", validate="many_to_one",
+        )
+        conteo_catalogo = catalogo["rango"].value_counts().reindex(rangos, fill_value=0)
+        conteo_expediciones = expediciones_altura["rango"].value_counts().reindex(
+            rangos, fill_value=0
+        )
+        total_catalogo = int(conteo_catalogo.sum())
+        total_expediciones = int(conteo_expediciones.sum())
+        sin_altura = len(expediciones_filtradas) - total_expediciones
 
-        grafico = px.scatter(
-            datos_dispersion,
-            x="height_metres",
-            y="cantidad",
-            hover_name="peak_name",
-            hover_data={"height_metres": ":.0f", "cantidad": ":d"},
-            labels={
-                "height_metres": "Elevación sobre el nivel del mar (m)",
-                "cantidad": "Expediciones registradas",
-            },
-            template="plotly_white",
-            color_discrete_sequence=["#426789"],
-        )
-        grafico.update_traces(
-            marker={"size": 9, "opacity": 0.7, "line": {"width": 0.7, "color": "white"}}
-        )
-        # Calcular Pearson y la recta con las mismas montañas del gráfico
-        x = datos_dispersion["height_metres"]
-        y = datos_dispersion["cantidad"]
-        texto_correlacion = "Pearson: no calculable, sin variación suficiente"
-        if len(datos_dispersion) >= 2 and x.nunique() > 1 and y.nunique() > 1:
-            correlacion = x.corr(y)
-            texto_correlacion = f"Pearson r = {correlacion:.3f}".replace(".", ",")
-
-            # Mínimos cuadrados: pendiente = covarianza / varianza
-            pendiente = x.cov(y) / x.var()
-            intercepto = y.mean() - pendiente * x.mean()
-            extremos_x = [x.min(), x.max()]
-            extremos_y = [
-                intercepto + pendiente * x.min(),
-                intercepto + pendiente * x.max(),
+        colores = ["#b79ad5", "#68bee2", "#edb04d", "#ed7977"]
+        grafico = go.Figure()
+        inicio_catalogo = 0
+        inicio_expediciones = 0
+        for rango, color in zip(rangos, colores):
+            cantidades = [int(conteo_catalogo[rango]), int(conteo_expediciones[rango])]
+            porcentajes = [
+                cantidades[0] / total_catalogo * 100 if total_catalogo else 0,
+                cantidades[1] / total_expediciones * 100 if total_expediciones else 0,
             ]
-            grafico.add_trace(
-                go.Scatter(
-                    x=extremos_x,
-                    y=extremos_y,
-                    mode="lines",
-                    name="Recta de regresión",
-                    line={"color": "#c57845", "width": 2, "dash": "dash"},
-                    hovertemplate=(
-                        "Recta de regresión<br>Elevación: %{x:.0f} m"
-                        "<br>Valor ajustado: %{y:.1f}<extra></extra>"
-                    ),
-                )
-            )
+            etiquetas = [f"{valor:.1f} %".replace(".", ",") for valor in porcentajes]
+            grafico.add_trace(go.Bar(
+                x=porcentajes,
+                y=[1, 0],
+                orientation="h",
+                name=rango,
+                marker_color=color,
+                width=0.34,
+                customdata=list(zip(cantidades, etiquetas)),
+                text=[etiqueta if valor >= 8 else "" for valor, etiqueta in zip(porcentajes, etiquetas)],
+                textposition="inside",
+                insidetextanchor="middle",
+                textfont={"color": "#09232b", "size": 15},
+                hovertemplate=(
+                    f"<b>{rango}</b><br>"
+                    "%{customdata[0]} registros<br>"
+                    "%{customdata[1]} del total de su grupo<extra></extra>"
+                ),
+            ))
+            # Etiquetar los segmentos pequeños sobre la barra sin agrandarlos
+            for y, inicio, valor, etiqueta in zip(
+                [1, 0], [inicio_catalogo, inicio_expediciones], porcentajes, etiquetas
+            ):
+                if 0 < valor < 8:
+                    grafico.add_annotation(
+                        x=inicio + valor / 2, y=y + 0.17,
+                        ax=0, ay=-25, text=etiqueta,
+                        showarrow=True, arrowhead=0, arrowcolor=color,
+                        font={"color": "#e7eff0", "size": 12},
+                        bgcolor="#073642", borderpad=2,
+                    )
+            inicio_catalogo += porcentajes[0]
+            inicio_expediciones += porcentajes[1]
+
         grafico.add_annotation(
-            x=0, y=1.2, xref="paper", yref="paper", xanchor="left",
-            text=f"<b>{texto_correlacion}</b>", showarrow=False,
-        )
-        grafico.update_layout(
-            height=480,
-            margin={"l": 60, "r": 25, "t": 90, "b": 60},
-            showlegend=False,
-            font={"family": "sans-serif", "color": "#24445f"},
-            hoverlabel={"bgcolor": "white"},
-        )
-        grafico.update_xaxes(gridcolor="#edf2f6", tickformat="d")
-        grafico.update_yaxes(gridcolor="#edf2f6", rangemode="tozero", tickformat="d")
-        sin_expediciones = int((datos_dispersion["cantidad"] == 0).sum())
-        grafico.add_annotation(
-            x=0, y=1.1, xref="paper", yref="paper", xanchor="left",
-            text=f"{len(datos_dispersion)} montañas · {sin_expediciones} sin expediciones para estos filtros",
+            x=0, y=1.55, xref="paper", yref="y", xanchor="left",
+            text=f"Catálogo: {total_catalogo} montañas con elevación",
             showarrow=False,
+        )
+        grafico.add_annotation(
+            x=0, y=0.55, xref="paper", yref="y", xanchor="left",
+            text=f"Expediciones con elevación identificada: {total_expediciones}",
+            showarrow=False,
+        )
+        if not total_expediciones:
+            mensaje = "No hay expediciones con elevación identificada para estos filtros."
+            if expediciones_filtradas.empty:
+                mensaje = "No hay expediciones registradas para estos filtros."
+            grafico.add_annotation(
+                x=50, y=0, text=mensaje, showarrow=False,
+            )
+        if sin_altura:
+            grafico.add_annotation(
+                x=0, y=-0.35, xref="paper", yref="paper", xanchor="left",
+                text=f"Expediciones excluidas por falta de elevación identificada: {sin_altura}",
+                showarrow=False, font={"size": 11},
+            )
+        grafico.update_layout(
+            barmode="stack",
+            height=430,
+            template="plotly_dark",
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="#073642",
+            font={"family": "sans-serif", "color": "#e7eff0"},
+            margin={"l": 105, "r": 25, "t": 105, "b": 105},
+            legend={
+                "orientation": "h", "x": 0, "y": 1.65,
+                "font": {"size": 12}, "traceorder": "normal",
+                "itemclick": False, "itemdoubleclick": False,
+            },
+            hoverlabel={"bgcolor": "#073642", "font": {"color": "#e7eff0"}},
+        )
+        grafico.update_xaxes(
+            range=[0, 100], tickvals=[0, 25, 50, 75, 100], ticksuffix=" %",
+            title="Porcentaje del total de cada grupo", showgrid=False,
+        )
+        grafico.update_yaxes(
+            range=[-0.45, 1.8], tickvals=[1, 0],
+            ticktext=["Catálogo", "Expediciones"], showgrid=False, zeroline=False,
         )
         return grafico
 
