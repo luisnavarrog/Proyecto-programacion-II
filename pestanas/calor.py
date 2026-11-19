@@ -45,7 +45,6 @@ def panel_ui():
 
 @module.server
 def panel_server(input, output, session):
-    # cargar_datos()
     members, _, _ = cargar_datos()
 
     @render_widget
@@ -55,7 +54,6 @@ def panel_server(input, output, session):
         d = members.dropna(subset=[fila, "year"]).copy()
         d["decada"] = ((d["year"].astype(int) // 10) * 10).astype(str) + "s"
 
-        # Las filas más frecuentes (top N)
         filas = d[fila].value_counts().head(FILAS_MOSTRADAS).index.tolist()
         d = d[d[fila].isin(filas)]
         decadas = sorted(d["decada"].unique())
@@ -79,7 +77,7 @@ def panel_server(input, output, session):
         fmt = ",.0f" if metrica == "n" else ".1f"
         etiqueta = METRICAS[metrica]
 
-        fig = go.Figure(
+        fig = go.FigureWidget(
             go.Heatmap(
                 z=z_data,
                 x=z.columns.tolist(),
