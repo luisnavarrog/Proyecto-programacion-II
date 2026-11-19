@@ -60,7 +60,10 @@ def panel_ui():
             "numero_picos",
             "Cantidad de montañas en el gráfico",
             min=1,
-            max=int(expeditions.dropna(subset=["peak_name"])["peak_id"].nunique()),
+            max=min(
+                30,
+                int(expeditions.dropna(subset=["peak_name"])["peak_id"].nunique()),
+            ),
             value=10,
             step=1,
         ),
@@ -286,29 +289,38 @@ def panel_server(input, output, session):
                 elevacion_comparada=float(pico["height_metres"]) if comparar_dibujos else None,
             )
 
-            ficha = ui.card(
+            contenido_ficha = [
                 ui.div(
-                    ui.div(
-                        ui.h3(pico["peak_name"]),
-                        ui.tags.dl(
-                            ui.tags.dt("Elevación sobre el nivel del mar"),
-                            ui.tags.dd(altura, class_="fs-3 text-primary"),
-                            ui.tags.dt("Primer ascenso registrado"),
-                            ui.tags.dd(primer_ascenso, class_="fs-4"),
-                            ui.tags.dt("Expediciones"),
-                            ui.tags.dd(str(cantidad), class_="fs-3 text-primary"),
-                        ),
-                        ui.p(
-                            "La cantidad de expediciones corresponde al período "
-                            "y la temporada seleccionados.",
-                            class_="small text-muted",
-                        ),
-                        class_="col-12 order-2" if len(seleccion) == 2 else "col-12 col-md-4",
+                    ui.h3(pico["peak_name"]),
+                    ui.tags.dl(
+                        ui.tags.dt("Elevación sobre el nivel del mar"),
+                        ui.tags.dd(altura, class_="fs-3 text-primary"),
+                        ui.tags.dt("Primer ascenso registrado"),
+                        ui.tags.dd(primer_ascenso, class_="fs-4"),
+                        ui.tags.dt("Expediciones"),
+                        ui.tags.dd(str(cantidad), class_="fs-3 text-primary"),
                     ),
+                    ui.p(
+                        "La cantidad de expediciones corresponde al período "
+                        "y la temporada seleccionados.",
+                        class_="small text-muted",
+                    ),
+                    class_="col-12" if ilustracion is None else (
+                        "col-12 order-2" if len(seleccion) == 2 else "col-12 col-md-4"
+                    ),
+                )
+            ]
+            if ilustracion is not None:
+                contenido_ficha.append(
                     ui.div(
                         ilustracion,
                         class_="col-12 order-1" if len(seleccion) == 2 else "col-12 col-md-8",
-                    ),
+                    )
+                )
+
+            ficha = ui.card(
+                ui.div(
+                    *contenido_ficha,
                     class_="row g-4 align-items-center",
                 ),
             )
