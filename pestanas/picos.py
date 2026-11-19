@@ -244,12 +244,12 @@ def panel_server(input, output, session):
         grafico.add_annotation(
             x=0, y=1.55, xref="paper", yref="y", xanchor="left",
             text=f"Catálogo: {total_catalogo} montañas con elevación",
-            showarrow=False,
+            showarrow=False, yshift=16, yanchor="bottom",
         )
         grafico.add_annotation(
             x=0, y=0.55, xref="paper", yref="y", xanchor="left",
             text=f"Expediciones con elevación identificada: {total_expediciones}",
-            showarrow=False,
+            showarrow=False, yshift=16, yanchor="bottom",
         )
         if not total_expediciones:
             mensaje = "No hay expediciones con elevación identificada para estos filtros."
@@ -266,7 +266,7 @@ def panel_server(input, output, session):
             )
         grafico.update_layout(
             barmode="stack",
-            height=430,
+            height=500,
             template="plotly_dark",
             paper_bgcolor="rgba(0,0,0,0)",
             plot_bgcolor="#073642",
