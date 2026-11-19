@@ -1,4 +1,3 @@
-
 """Pestaña: Perfil y oxígeno."""
 
 import pandas as pd
@@ -26,27 +25,35 @@ def panel_ui():
     return ui.layout_sidebar(
         ui.sidebar(
             ui.input_select("montana", "Montaña", opciones, selected="Todas las montañas"),
-            ui.input_slider("anio", "Año", min=anio_min, max=anio_max, value=(anio_min, anio_max), sep=""),
-           # ui.p("El selector cambia solo el gráfico de éxito según oxígeno."),
+            ui.input_slider("anio", "Años", min=anio_min, max=anio_max, value=(anio_min, anio_max), sep=""),
+            ui.p("Seleccione una montaña y un rango de años para visualizar los datos.", class_="small text-white"),
         ),
-        ui.card(
-            ui.card_header("Pregunta 3: edades y éxito según oxígeno"),
-            ui.p("¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?"),
+        ui.div(
+            ui.h3("Edades y éxito según oxígeno", class_="text-white fw-bold"),
+            ui.hr(),
+            ui.h4("¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?", class_="small text-white"),
+            ui.hr(),
+            ui.hr(),
+            ui.hr(),
+            
             ui.layout_columns(
-                ui.card(
-                    ui.card_header("Distribución de edades"),
+                ui.div(
+                    ui.h5("Distribución de edades", class_="text-white fw-bold"),
                     output_widget("grafico_edades"),
+                    ui.hr(),
+                    ui.output_ui("nota_edades")
                 ),
-                ui.card(
-                    ui.card_header("Éxito según uso de oxígeno"),
+                ui.div(
+                    ui.h5("Éxito según uso de oxígeno", class_="text-white fw-bold"),
                     output_widget("grafico_oxigeno"),
+                    ui.hr(),
+                    ui.output_ui("nota_oxigeno")
                 ),
+                fill= False,
             ),
-            ui.card(
-                ui.card_header("Participaciones usadas en el análisis"),
-                ui.output_ui("revision"),
-            ),
-            ui.p("Comparación descriptiva: las diferencias pueden relacionarse con la montaña, la temporada y el período. No demuestra un efecto causal del oxígeno."),
+        
+            ui.hr(),
+            ui.p("Comparación descriptiva: las diferencias pueden relacionarse con la montaña, la temporada y el período. No demuestra un efecto causal del oxígeno.", class_="text-white"),
         ),
     )
 
@@ -59,39 +66,54 @@ def panel_server(input, output, session):
     def datos_filtrados():
         #se filtra la tabla por el rango de años del slider
         rango = input.anio()
-        return members[(members["year"] >= rango[0]) & (members["year"] <= rango[1])]
+        tabla = members[(members["year"] >= rango[0]) & (members["year"] <= rango[1])]
+    
+        #si se elige solo una montaña, se usaran solos sus participantes
+        elegida= input.montana()
+        if elegida != "Todas las montañas":
+            tabla= tabla[tabla["peak_name"]==elegida]
+        return tabla
+
+    
 
     @render_widget
-    def grafico_edades(): #guarda solo las edades válidas (se escogio entre 15 y 90)
+    def grafico_edades(): #guarda solo las edades válidas (escogí entre 15 y 90)
         tabla = datos_filtrados()
-
-        elegida = input.montana()
-        if elegida != "Todas las montañas":
-            tabla = tabla[tabla["peak_name"] == elegida]
-
         edades=[]
+
         for edad in tabla["age"]:
-            if pd.notna(edad) and edad >= 15 and edad <= 90:
+            if pd.notna(edad) and edad >= 15 and edad <= 90: #verifica primero que no sea un valor nulo y luego que esté en el rango de 15 a 90
                 edades.append(edad)
 
         # Histograma con intervalos de 5 años
-        fig = go.FigureWidget(go.Histogram(x=edades, xbins=dict(start=15, end=95, size=5)))
-        fig.update_layout(
-            title="Distribución de edades",
-            xaxis_title="Edad (años)",
-            yaxis_title="Número de participaciones",
+        fig = go.FigureWidget(
+            go.Histogram( 
+                x=edades,
+                xbins=dict(start=15, end=95, size=5),
+                marker=dict(color="#4A98C9")
+            )
         )
 
+        fig.update_layout(
+            xaxis_title="Edad (años)",
+            yaxis_title="Número de participaciones",
+            font= dict(color= "#FFFFFF"),
+            height= 350,
+            bargap=0.05, #espacio entre barras
+            plot_bgcolor= "rgba(0,0,0,0)", #color de fondo del grafico
+            paper_bgcolor= "rgba(0,0,0,0)",
+            margin=dict(l=60, r=20, t=15, b=45) #margen izquierdo, derecho, superior e inferior (es el orden en que se colocan los valores)
+        )
+
+
+        fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)") #crea líneas muy sutiles y tenues que sirven de guía visual sin saturar el gráfico
+        fig.update_xaxes(showgrid=False) #oculto las líneas verticales del eje x para que no se vean
         return fig
 
     @render_widget
     def grafico_oxigeno():
         # Si se eligió una montaña, se usan solo sus participaciones
         tabla = datos_filtrados()
-        elegida = input.montana()
-        if elegida != "Todas las montañas":
-            tabla = tabla[tabla["peak_name"] == elegida]
-
         usos= [True, False]
         nombres= ["Con oxígeno", "Sin oxígeno"]
         textos=[]
@@ -108,12 +130,20 @@ def panel_server(input, output, session):
             if n >= MIN_N:
                 porcentaje = grupo["success"].sum() / n * 100
                 porcentajes.append(porcentaje)
-                textos.append(str(round(porcentaje, 1)) + " % (n = " + str(n) + ")")
+                textos.append(str(round(porcentaje, 1)) + " % ")
             else:
                 porcentajes.append(None)
                 textos.append("")
 
-        fig = go.FigureWidget(go.Bar(x=nombres, y=porcentajes, text=textos, textposition="outside"))
+        fig = go.FigureWidget(
+            go.Bar(x=nombres,
+                    y=porcentajes, 
+                    text=textos, 
+                    textposition="outside",
+                    textfont=dict(size=16,color="#FFFFFF"),
+                    marker_color= ["#509693", "#B9D9CB"],
+                    width=0.40
+                    ))
 
         # Se indican los grupos que tienen pocos datos
         for i in range(len(usos)):
@@ -126,20 +156,32 @@ def panel_server(input, output, session):
                 )
 
         fig.update_layout(
-            title="Éxito según uso de oxígeno",
             yaxis_title="Porcentaje de éxito",
             yaxis=dict(range=[0, 110]),
+            font= dict(color= "#FFFFFF"),
+            height= 350,
+            plot_bgcolor= "rgba(0,0,0,0)",
+            paper_bgcolor= "rgba(0,0,0,0)",
+            margin= dict(l=60, r=20, t=15, b=45)
+        )
+
+        fig.update_yaxes(
+            gridcolor="rgba(255,255,255,0.15)",
+            ticksuffix=" %") #añade el %
+        fig.update_xaxes(
+           showgrid=False,
+            tickmode="array",
+            tickvals=nombres, #categorias del eje x
+            ticktext=[ #establece el texto que se mostrará en cada categoría del eje x
+                "Con oxígeno<br>n = " + str(cantidades[0]),
+                "Sin oxígeno<br>n = " + str(cantidades[1])
+            ]
         )
         return fig
 
     @render.ui
-    def revision():
+    def nota_edades():
         tabla = datos_filtrados()
-        elegida = input.montana()
-        if elegida != "Todas las montañas":
-            tabla = tabla[tabla["peak_name"] == elegida]
-
-        n_total = len(tabla)
         edades_faltan = 0
         edades_revisar = 0
         n_edades = 0
@@ -153,43 +195,41 @@ def panel_server(input, output, session):
             else:
                 n_edades = n_edades + 1
 
-        # Se cuentan las participaciones con dato de éxito
-        sin_exito = 0
+        return ui.div(
+            ui.h2(format(n_edades, ",").replace(",", "."), class_="text-white fw-bold"),
+            ui.p("Participaciones con edades entre 15 y 90 años.", class_="text-white"),
+            ui.p(
+                "Se excluyen " + str(edades_faltan) + " participaciones sin edad y "
+                + str(edades_revisar) + " fuera del intervalo.",
+                class_="small text-white",
+            ),
+        )
+
+    @render.ui
+    def nota_oxigeno():
+        tabla= datos_filtrados()
+        #Cuento participantes con dato de exito y con/sin oxígeno
+        sin_exito=0
         for valor in tabla["success"]:
             if pd.isna(valor):
-                sin_exito = sin_exito + 1
+                sin_exito += 1
 
-        # Solo cuentan las participaciones con éxito y uso de oxígeno conocidos
         n_exito = len(tabla[
             (tabla["success"].notna()) &
             (tabla["oxygen_used"].notna())
         ])
+
         sin_oxigeno = tabla["oxygen_used"].isna().sum()
 
+        if sin_exito == 0 and sin_oxigeno == 0:
+            mensaje = "No se registran datos faltantes."
+        else:
+            mensaje = "Se excluyen " + str(sin_exito) + " participaciones sin dato de éxito y " + str(sin_oxigeno) + " sin dato de uso de oxígeno."
 
         return ui.div(
-            ui.p(
-                "Estos números cambian con los filtros. Cada gráfico utiliza las participaciones que tienen los datos necesarios.",
-                class_="small",
-            ),
-            ui.layout_columns(
-                ui.card(
-                    ui.card_header("Histograma de edades"),
-                    ui.h2(str(n_edades)),
-                    ui.p("Participaciones con edad entre 15 y 90 años", class_="small"),
-                ),
-                ui.card(
-                    ui.card_header("Gráfico de oxígeno"),
-                    ui.h2(str(n_exito)),
-                    ui.p("Participaciones con dato de oxígeno y de éxito", class_="small"),
-                ),
-            ),
-            ui.p(
-                "Excluidas del histograma: " + str(edades_faltan) + " sin edad y "
-                + str(edades_revisar) + " fuera de 15 a 90 años. "
-                + "Excluidas de la comparación de oxígeno: " + str(sin_exito) + " sin dato de éxito y "
-                + str(sin_oxigeno) + " sin dato de oxígeno.",
-                class_="small",
-            ),
+            ui.h2(format(n_exito, ",").replace(",", "."), class_="text-white fw-bold"),
+            ui.p("Participaciones con éxito conocido y uso de oxígeno registrado.", class_="text-white"),
+            ui.p(mensaje, class_="small text-white"),
+            ui.p("No se muestran los porcentajes de éxito para grupos con menos de 20 participaciones.",
+                 class_="small text-white"),
         )
-
