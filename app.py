@@ -17,7 +17,7 @@ app_ui = ui.page_fluid(
         ui.nav_panel("Mapa de calor", calor.panel_ui("calor")),
     ),
     title="Expediciones al Himalaya",
-    theme=shinyswatch.theme.solar(),
+    theme=shinyswatch.theme.darkly(),
 )
 
 
