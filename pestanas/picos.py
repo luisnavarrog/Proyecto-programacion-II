@@ -7,6 +7,7 @@ from shinywidgets import output_widget, render_widget
 
 from src.datos import cargar_datos
 from src.ilustraciones import preparar_ilustracion
+from src.tema import GLACIAR, PANEL, TEXTO, aplicar_tema
 
 
 members, expeditions, peaks = cargar_datos()
@@ -131,7 +132,7 @@ def panel_server(input, output, session):
             grafico.update_xaxes(visible=False)
             grafico.update_yaxes(visible=False)
 
-            return grafico
+            return aplicar_tema(grafico)
         # Contar las expediciones por montaña
         conteo_picos = expediciones_filtradas.groupby(
             ["peak_id", "peak_name"]
@@ -155,9 +156,10 @@ def panel_server(input, output, session):
         )
 
         grafico.update_yaxes(autorange="reversed")
+        grafico.update_traces(marker_color=GLACIAR)
         grafico.update_layout(height=max(400, 28 * len(top_picos) + 100))
 
-        return grafico
+        return aplicar_tema(grafico)
 
     @render_widget
     def proporciones_altura():
@@ -235,8 +237,8 @@ def panel_server(input, output, session):
                         x=inicio + valor / 2, y=y + 0.17,
                         ax=0, ay=-25, text=etiqueta,
                         showarrow=True, arrowhead=0, arrowcolor=color,
-                        font={"color": "#e7eff0", "size": 12},
-                        bgcolor="#073642", borderpad=2,
+                        font={"color": TEXTO, "size": 12},
+                        bgcolor=PANEL, borderpad=2,
                     )
             inicio_catalogo += porcentajes[0]
             inicio_expediciones += porcentajes[1]
@@ -257,17 +259,12 @@ def panel_server(input, output, session):
         grafico.update_layout(
             barmode="stack",
             height=450,
-            template="plotly_dark",
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="#073642",
-            font={"family": "sans-serif", "color": "#e7eff0"},
             margin={"l": 150, "r": 25, "t": 105, "b": 105},
             legend={
                 "orientation": "h", "x": 0, "y": 1.65,
                 "font": {"size": 12}, "traceorder": "normal",
                 "itemclick": False, "itemdoubleclick": False,
             },
-            hoverlabel={"bgcolor": "#073642", "font": {"color": "#e7eff0"}},
         )
         grafico.update_xaxes(
             range=[0, 100], tickvals=[0, 25, 50, 75, 100], ticksuffix=" %",
@@ -281,7 +278,7 @@ def panel_server(input, output, session):
             ],
             ticklabelstandoff=12, showgrid=False, zeroline=False,
         )
-        return grafico
+        return aplicar_tema(grafico)
 
     @render.ui
     def ficha_pico():
