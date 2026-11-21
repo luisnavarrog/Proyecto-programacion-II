@@ -42,17 +42,15 @@ carpeta_imagenes = Path(__file__).resolve().parent.parent / "www" / "imagenes"
 
 
 def preparar_ilustracion(identificador, nombre, altura, elevacion_comparada=None):
-    """Devuelve el SVG del pico o su respaldo con el encuadre de la ficha."""
-    archivo_svg = carpeta_imagenes / archivos_picos.get(
-        identificador, "generica.svg"
-    )
-    es_generica = False
+    """Devuelve el SVG propio del pico, si está disponible."""
+    nombre_archivo = archivos_picos.get(identificador)
+    if nombre_archivo is None:
+        return None
+    archivo_svg = carpeta_imagenes / nombre_archivo
     if not archivo_svg.is_file():
-        archivo_svg = carpeta_imagenes / "generica.svg"
-    if archivo_svg.name == "generica.svg":
-        es_generica = True
+        return None
 
-    ilustracion = ui.p("Ilustración en preparación.")
+    ilustracion = None
     if archivo_svg.is_file():
         # Acercar el encuadre a la cima sin modificar el archivo original
         ET.register_namespace("", "http://www.w3.org/2000/svg")
@@ -165,10 +163,4 @@ def preparar_ilustracion(identificador, nombre, altura, elevacion_comparada=None
                 elemento.set(atributo, valor)
         contenido_svg = ET.tostring(dibujo, encoding="unicode")
         ilustracion = ui.div(ui.HTML(contenido_svg))
-        if es_generica:
-            ilustracion = ui.div(
-                ilustracion,
-                ui.p("Ilustración genérica.", class_="small text-muted"),
-            )
-
     return ilustracion

@@ -19,5 +19,5 @@ python -m pip install -r requirements.txt
 python -m shiny run --reload app.py
 ```
 
-Las pestañas están preparadas; sus gráficos se incorporarán en sus respectivos
+Las pestañas están preparadas. Sus gráficos se incorporarán en sus respectivos
 módulos dentro de `pestanas/`.
