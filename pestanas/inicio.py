@@ -35,12 +35,18 @@ def panel_ui(expeditions, peaks):
                 ui.input_action_button("abrir_picos", "Ir a Picos", class_="btn-outline-primary"),
             ),
             ui.card(
+                ui.p("¿Qué edades predominan y cómo varía el éxito según el uso de oxígeno?", class_="fw-semibold"),
+                ui.input_action_button(
+                    "abrir_perfil", "Ir a Perfil y oxígeno", class_="btn-outline-primary"
+                ),
+            ),
+            ui.card(
                 ui.p("¿En qué temporadas se usa más oxígeno?", class_="fw-semibold"),
                 ui.input_action_button(
                     "abrir_calor", "Ir al Mapa de calor", class_="btn-outline-primary"
                 ),
             ),
-            col_widths={"sm": (12, 12), "md": (6, 6)},
+            col_widths={"sm": (12, 12,12), "md": (4,4,4)},
         ),
         ui.p(
             "Fuente de datos: Himalayan Database, vía TidyTuesday.",

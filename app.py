@@ -14,7 +14,7 @@ app_ui = ui.page_fluid(
         ui.nav_panel("Inicio", inicio.panel_ui(expeditions, peaks)),
         ui.nav_panel("Evolución", evolucion.panel_ui("evolucion")),
         ui.nav_panel("Picos", picos.panel_ui("picos"), value="picos"),
-        ui.nav_panel("Perfil y oxígeno", perfil.panel_ui("perfil")),
+        ui.nav_panel("Perfil y oxígeno", perfil.panel_ui("perfil"), value="perfil"),
         ui.nav_panel("Mapa de calor", calor.panel_ui("calor"), value="calor"),
         id="pestanas",
     ),
@@ -26,7 +26,7 @@ app_ui = ui.page_fluid(
 def server(input, output, session):
     calor.panel_server("calor")
     picos.panel_server("picos")
-
+    perfil.panel_server("perfil")
     @reactive.effect
     @reactive.event(input.abrir_picos)
     def abrir_picos():
@@ -38,6 +38,11 @@ def server(input, output, session):
         ui.update_navs("pestanas", selected="calor")
 
 
+    @reactive.effect
+    @reactive.event(input.abrir_perfil)
+    def abrir_perfil():
+        ui.update_navs("pestanas", selected="perfil")
+        
 app = App(
     app_ui,
     server,
