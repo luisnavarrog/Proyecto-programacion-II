@@ -7,6 +7,7 @@ from shinywidgets import output_widget, render_widget #con render muestro el gra
 
 from src.datos import cargar_datos  #traigo la tabla de integrantes
 from src.tema import GLACIAR, aplicar_tema
+
 #Menos de 20 integrantes, no se mostrara el porcentaje
 MIN_N = 20
 
@@ -24,14 +25,25 @@ def panel_ui():
 
     return ui.layout_sidebar(
         ui.sidebar(
-            ui.input_select("montana", "Montaña", opciones, selected="Todas las montañas"),
+            ui.input_select("montana", "Montaña", opciones, selected="Todas"),
+            ui.input_select("temporada",
+                             "Temporada",
+                             choices={"Todas":"Todas las temporadas", 
+                                      "Spring": "Primavera",
+                                        "Summer": "Verano",
+                                          "Autumn": "Otoño", 
+                                          "Winter": "Invierno"}, 
+                                          selected="Todas las temporadas"),
+
             ui.input_slider("anio", "Años", min=anio_min, max=anio_max, value=(anio_min, anio_max), sep=""),
-            ui.help_text("Seleccione una montaña y un rango de años para visualizar los datos."),
+            ui.help_text("Seleccione una montaña, una temporada y un rango de años para visualizar los datos."),
+            ui.help_text("Los porcentajes de éxito se muestran para grupos con al menos " + str(MIN_N) + " participaciones."),
         ),
+
         ui.card(
             ui.card_header("Perfil y oxígeno: edades y éxito"),
             ui.hr(),
-            ui.h4("¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?"),
+            ui.h5("¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?", class_="mt-3 mb-3"),
             ui.hr(),
             
             ui.layout_columns(
@@ -51,7 +63,10 @@ def panel_ui():
             ),
         
             ui.hr(),
-            ui.p("Comparación descriptiva: las diferencias pueden relacionarse con la montaña, la temporada y el período. No demuestra un efecto causal del oxígeno.", class_="text-white"),
+            ui.output_ui("interpretacion"), #agregar intepretacion para que se vea mas completa la pestaña
+
+            ui.hr(),
+            ui.p("Las diferencias observadas son descriptivas y no permiten afirmar que el uso de oxígeno cause un mayor éxito.", class_="small text-white-50"),
         ),
     )
 
@@ -70,6 +85,11 @@ def panel_server(input, output, session):
         elegida= input.montana()
         if elegida != "Todas las montañas":
             tabla= tabla[tabla["peak_name"]==elegida]
+
+        #si se elige una temporada, se usaran solo sus participantes
+        elegida_temporada= input.temporada()
+        if elegida_temporada != "Todas":
+            tabla= tabla[tabla["season"]==elegida_temporada]
         return tabla
 
     
@@ -100,7 +120,7 @@ def panel_server(input, output, session):
             bargap=0.05, #espacio entre barras
             plot_bgcolor= "rgba(0,0,0,0)", #color de fondo del grafico
             paper_bgcolor= "rgba(0,0,0,0)",
-            margin=dict(l=60, r=20, t=15, b=45) #margen izquierdo, derecho, superior e inferior (es el orden en que se colocan los valores)
+            margin=dict(l=65, r=20, t=15, b=60) #margen izquierdo, derecho, superior e inferior (es el orden en que se colocan los valores)
         )
 
 
@@ -130,7 +150,7 @@ def panel_server(input, output, session):
             if n >= MIN_N:
                 porcentaje = grupo["success"].sum() / n * 100
                 porcentajes.append(porcentaje)
-                textos.append(str(round(porcentaje, 1)) + " % ")
+                textos.append(str(round(porcentaje, 1)).replace(".", ",") + " % ")
             else:
                 porcentajes.append(None)
                 textos.append("")
@@ -162,7 +182,7 @@ def panel_server(input, output, session):
             height= 350,
             plot_bgcolor= "rgba(0,0,0,0)",
             paper_bgcolor= "rgba(0,0,0,0)",
-            margin= dict(l=60, r=20, t=15, b=45)
+            margin= dict(l=65, r=20, t=15, b=60)
         )
 
         fig.update_yaxes(
@@ -198,13 +218,13 @@ def panel_server(input, output, session):
 
         return ui.div(
             ui.h2(format(n_edades, ",").replace(",", "."), class_="text-primary fw-bold"),
-            ui.p("Participaciones con edades entre 15 y 90 años.", class_="text-white"),
+            ui.p("Participaciones con edades válidas (15-90 años).", class_="text-white"),
             ui.p(
-                "Se excluyen " + format(edades_faltan, ",").replace(",", ".")
+                "Se excluyen: " + format(edades_faltan, ",").replace(",", ".")
                 + " participaciones sin edad y "
                 + format(edades_revisar, ",").replace(",", ".")
                 + " fuera del intervalo.",
-                class_="small text-white",
+                class_="small text-white-50",
             ),
         )
 
@@ -225,14 +245,67 @@ def panel_server(input, output, session):
         sin_oxigeno = tabla["oxygen_used"].isna().sum()
 
         if sin_exito == 0 and sin_oxigeno == 0:
-            mensaje = "No se registran datos faltantes."
+            mensaje = ""
         else:
             mensaje = "Se excluyen " + str(sin_exito) + " participaciones sin dato de éxito y " + str(sin_oxigeno) + " sin dato de uso de oxígeno."
 
         return ui.div(
             ui.h2(format(n_exito, ",").replace(",", "."), class_="text-primary fw-bold"),
             ui.p("Participaciones con información sobre el resultado del ascenso y el uso de oxígeno.", class_="text-white"),
-            ui.p(mensaje, class_="small text-white"),
-            ui.p("No se muestran los porcentajes de éxito para grupos con menos de " + str(MIN_N) + " participaciones.",
-                 class_="small text-white"),
+            ui.p(mensaje, class_="small text-white-50"),
+        )
+    @render.ui
+    def interpretacion():
+        tabla = datos_filtrados()
+
+        # Éxito con y sin oxígeno, con el mismo cálculo del gráfico
+        porcentajes = []
+        cantidades = []
+        for uso in [True, False]:
+            grupo = tabla[(tabla["oxygen_used"] == uso) & (tabla["success"].notna())]
+            n = len(grupo)
+            cantidades.append(n)
+            if n >= MIN_N:
+                porcentajes.append(grupo["success"].sum() / n * 100)
+            else:
+                porcentajes.append(None)
+
+        if cantidades[0] < MIN_N or cantidades[1] < MIN_N:
+            texto_exito = "No hay suficientes participaciones en uno de los grupos para comparar el éxito."
+        else:
+            if porcentajes[0] > porcentajes[1]:
+                texto_exito = (
+                    "El porcentaje de éxito fue mayor entre las participaciones que utilizaron oxígeno, con un "
+                    + str(round(porcentajes[0], 1)).replace(".", ",") + " %."
+                )
+            elif porcentajes[1] > porcentajes[0]:
+                texto_exito = (
+                    "El porcentaje de éxito fue mayor entre las participaciones que no utilizaron oxígeno, con un "
+                    + str(round(porcentajes[1], 1)).replace(".", ",") + " %."
+                )
+            else:
+                texto_exito = (
+                    "Ambos grupos presentaron el mismo porcentaje de éxito ("
+                    + str(round(porcentajes[0], 1)).replace(".", ",") + " %)."
+                )
+
+        # Rango de edad con más participaciones (intervalos de 5 años)
+        edades = tabla["age"].dropna()
+        edades = edades[(edades >= 15) & (edades <= 90)]
+        if len(edades) > 0:
+            grupos = pd.cut(edades, bins=list(range(15, 100, 5)), right=False)
+            intervalo = grupos.value_counts().idxmax()
+            texto_edad = (
+                "El intervalo de "
+                + str(int(intervalo.left)) + " a " + str(int(intervalo.right) - 1)
+                + " años tiene la mayor cantidad de participaciones."
+
+            )
+        else:
+            texto_edad = "No hay edades válidas para estos filtros."
+
+        return ui.div(
+            ui.h5("¿Qué muestran los datos?", class_="fw-bold"),
+            ui.p(texto_edad, class_="text-white"),
+            ui.p(texto_exito, class_="text-white"),
         )
