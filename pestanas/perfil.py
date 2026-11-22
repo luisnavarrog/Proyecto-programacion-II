@@ -6,7 +6,7 @@ from shiny import module, render, ui, reactive
 from shinywidgets import output_widget, render_widget #con render muestro el grafico dentro de shiny
 
 from src.datos import cargar_datos  #traigo la tabla de integrantes
-
+from src.tema import GLACIAR, aplicar_tema
 #Menos de 20 integrantes, no se mostrara el porcentaje
 MIN_N = 20
 
@@ -26,14 +26,12 @@ def panel_ui():
         ui.sidebar(
             ui.input_select("montana", "Montaña", opciones, selected="Todas las montañas"),
             ui.input_slider("anio", "Años", min=anio_min, max=anio_max, value=(anio_min, anio_max), sep=""),
-            ui.p("Seleccione una montaña y un rango de años para visualizar los datos.", class_="small text-white"),
+            ui.help_text("Seleccione una montaña y un rango de años para visualizar los datos."),
         ),
-        ui.div(
-            ui.h3("Edades y éxito según oxígeno", class_="text-white fw-bold"),
+        ui.card(
+            ui.card_header("Perfil y oxígeno: edades y éxito"),
             ui.hr(),
-            ui.h4("¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?", class_="small text-white"),
-            ui.hr(),
-            ui.hr(),
+            ui.h4("¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?"),
             ui.hr(),
             
             ui.layout_columns(
@@ -90,7 +88,7 @@ def panel_server(input, output, session):
             go.Histogram( 
                 x=edades,
                 xbins=dict(start=15, end=95, size=5),
-                marker=dict(color="#4A98C9")
+                marker=dict(color=GLACIAR)
             )
         )
 
@@ -108,7 +106,9 @@ def panel_server(input, output, session):
 
         fig.update_yaxes(gridcolor="rgba(255,255,255,0.15)") #crea líneas muy sutiles y tenues que sirven de guía visual sin saturar el gráfico
         fig.update_xaxes(showgrid=False) #oculto las líneas verticales del eje x para que no se vean
+        aplicar_tema(fig)
         return fig
+    
 
     @render_widget
     def grafico_oxigeno():
@@ -169,14 +169,15 @@ def panel_server(input, output, session):
             gridcolor="rgba(255,255,255,0.15)",
             ticksuffix=" %") #añade el %
         fig.update_xaxes(
-           showgrid=False,
+            showgrid=False,
             tickmode="array",
             tickvals=nombres, #categorias del eje x
             ticktext=[ #establece el texto que se mostrará en cada categoría del eje x
-                "Con oxígeno<br>n = " + str(cantidades[0]),
-                "Sin oxígeno<br>n = " + str(cantidades[1])
+                "Con oxígeno<br>n = " + format(cantidades[0], ",").replace(",", "."),
+                "Sin oxígeno<br>n = " + format(cantidades[1], ",").replace(",", ".")
             ]
         )
+        aplicar_tema(fig)
         return fig
 
     @render.ui
@@ -196,11 +197,13 @@ def panel_server(input, output, session):
                 n_edades = n_edades + 1
 
         return ui.div(
-            ui.h2(format(n_edades, ",").replace(",", "."), class_="text-white fw-bold"),
+            ui.h2(format(n_edades, ",").replace(",", "."), class_="text-primary fw-bold"),
             ui.p("Participaciones con edades entre 15 y 90 años.", class_="text-white"),
             ui.p(
-                "Se excluyen " + str(edades_faltan) + " participaciones sin edad y "
-                + str(edades_revisar) + " fuera del intervalo.",
+                "Se excluyen " + format(edades_faltan, ",").replace(",", ".")
+                + " participaciones sin edad y "
+                + format(edades_revisar, ",").replace(",", ".")
+                + " fuera del intervalo.",
                 class_="small text-white",
             ),
         )
@@ -227,9 +230,9 @@ def panel_server(input, output, session):
             mensaje = "Se excluyen " + str(sin_exito) + " participaciones sin dato de éxito y " + str(sin_oxigeno) + " sin dato de uso de oxígeno."
 
         return ui.div(
-            ui.h2(format(n_exito, ",").replace(",", "."), class_="text-white fw-bold"),
-            ui.p("Participaciones con éxito conocido y uso de oxígeno registrado.", class_="text-white"),
+            ui.h2(format(n_exito, ",").replace(",", "."), class_="text-primary fw-bold"),
+            ui.p("Participaciones con información sobre el resultado del ascenso y el uso de oxígeno.", class_="text-white"),
             ui.p(mensaje, class_="small text-white"),
-            ui.p("No se muestran los porcentajes de éxito para grupos con menos de 20 participaciones.",
+            ui.p("No se muestran los porcentajes de éxito para grupos con menos de " + str(MIN_N) + " participaciones.",
                  class_="small text-white"),
         )
