@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from shiny import module, reactive, ui
 from shinywidgets import output_widget, render_widget
 from src.datos import cargar_datos
+from src.tema import aplicar_tema
 
 #Variable para definir las filas del mapa
 FILAS = {"peak_name": "Pico", "citizenship": "Nacionalidad"}
@@ -29,14 +30,21 @@ TOP_N = 10
 MIN_N = 5
 
 # Configuración de cada métrica: nombre, escala de color, formato y máximo fijo
+ESCALA_OXIGENO = [
+    [0.0, "#075561"],
+    [0.4, "#23868a"],
+    [0.7, "#8dbf8d"],
+    [1.0, "#ffcc66"],
+]
+
 METRICAS = {
     "success": dict(nombre="Tasa de éxito", escala="Mint", sufijo=" %", fmt=".0f", zmax=100),
     "died": dict(nombre="Tasa de mortalidad", escala="Reds", sufijo=" %", fmt=".1f", zmax=None),
-    "oxygen_used": dict(nombre="Uso de oxígeno", escala="Greys", sufijo=" %", fmt=".0f", zmax=100),
+    "oxygen_used": dict(nombre="Uso de oxígeno", escala=ESCALA_OXIGENO, sufijo=" %", fmt=".0f", zmax=100),
     "n": dict(nombre="Número de integrantes", escala="Blues", sufijo="", fmt=",.0f", zmax=None),
 }
 
-COLOR_VACIO = "#E5E7EB"  # celdas sin datos suficientes
+COLOR_VACIO = "#0B172A"  # celdas sin datos suficientes
 
 def preparar_base(members: pd.DataFrame) -> pd.DataFrame:
     """Añade las columnas 'decada' y 'estacion' una sola vez."""
@@ -102,7 +110,7 @@ def figura_vacia(mensaje: str) -> go.FigureWidget:
         annotations=[dict(text=mensaje, showarrow=False, font=dict(size=16))],
         height=300,
     )
-    return fig
+    return aplicar_tema(fig)
 
 
 @module.ui
@@ -183,7 +191,7 @@ def panel_server(input, output, session):
             ]
             for fila in z_data
         ]
-                
+
         mensajes = []
 
         for i, nombre in enumerate(z.index):
@@ -244,15 +252,21 @@ def panel_server(input, output, session):
                 ),
             )
         )
-        fig.update_xaxes(type="category", title=PERIODOS[input.periodo()], side="bottom")
+        fig.update_xaxes(
+            type="category",
+            title=PERIODOS[input.periodo()],
+            side="bottom",
+            showgrid=True,
+        )
         fig.update_yaxes(
             type="category",
             title=FILAS[input.filas()],
             autorange="reversed",
             automargin=True,
+            showgrid=True,
         )
+        aplicar_tema(fig)
         fig.update_layout(
-            font=dict(color="#FFFFFF"),
             title=dict(
                 text=f"{titulo}<br><sup>{subtitulo}</sup>",
                 x=0,
@@ -260,7 +274,6 @@ def panel_server(input, output, session):
             ),
             height=max(420, 30 * len(z) + 160),
             plot_bgcolor=COLOR_VACIO,
-            paper_bgcolor="rgba(0,0,0,0)",
             margin=dict(l=10, r=10, t=85, b=10),
         )
         return fig
