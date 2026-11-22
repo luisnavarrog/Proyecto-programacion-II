@@ -21,7 +21,17 @@ La interfaz utiliza un tema oscuro personalizado (`shinyswatch` *darkly* + CSS p
   - **Período:** **Década** o **estación del año** (Primavera, Verano, Otoño, Invierno).
   - *Nota metodológica:* Las celdas con menos de **5 integrantes** se ocultan al calcular tasas para evitar distorsiones por tamaño de muestra reducido.
 - **Evolución (`evolucion.py`):** *(En desarrollo)* Estructura de interfaz preparada para el análisis histórico temporal.
-- **Perfil y oxígeno (`perfil.py`):** *(En desarrollo)* Estructura de interfaz preparada para el análisis demográfico y uso de oxígeno suplementario.
+- **Perfil y oxígeno (`perfil.py`):** Distribución de edades y comparación descriptiva de tasas de éxito con y sin uso de oxígeno, con filtros por montaña, temporada y años.
+
+### Preguntas de exploración
+
+Las vistas del proyecto se organizan alrededor de estas preguntas:
+
+- **Inicio:** ¿Qué montañas concentran más expediciones? ¿Qué edades predominan y cómo varía el éxito según el uso de oxígeno? ¿En qué temporadas se usa más oxígeno?
+- **Picos:** ¿Cuáles tienen más expediciones? ¿Dónde se concentran las expediciones según el rango de elevación? También permite comparar la elevación y los datos de hasta dos montañas.
+- **Mapa de calor:** ¿En qué temporadas se usa más oxígeno? Los filtros también permiten explorar cómo cambian la tasa de éxito, la mortalidad, el uso de oxígeno o el número de integrantes por pico o nacionalidad y por década o estación.
+- **Evolución:** Sección en desarrollo; la pregunta de análisis está pendiente.
+- **Perfil y oxígeno:** ¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno?
 
 ## Conjuntos de datos
 
@@ -99,4 +109,8 @@ Luego abre en tu navegador la URL local que muestra la consola (por defecto `htt
 
 ## Autores
 
-- **Luis Navarro** ([@luisnavarrog](https://github.com/luisnavarrog)) y equipo del curso *Programación II*.
+- **Luis Navarro** ([@luisnavarrog](https://github.com/luisnavarrog))
+- **Scarleth** (GitHub: ____________________)
+- **Fabián** (GitHub: ____________________)
+
+Proyecto del curso *Programación II*.
