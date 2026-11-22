@@ -7,7 +7,13 @@ from shinywidgets import output_widget, render_widget
 
 from src.datos import cargar_datos
 from src.ilustraciones import preparar_ilustracion
-from src.tema import GLACIAR, PANEL, TEXTO, aplicar_tema
+from src.tema import (
+    COLORES_RANGOS,
+    GLACIAR,
+    PANEL,
+    TEXTO,
+    aplicar_tema,
+)
 
 
 members, expeditions, peaks = cargar_datos()
@@ -199,7 +205,7 @@ def panel_server(input, output, session):
         total_expediciones = int(conteo_expediciones.sum())
         sin_altura = len(expediciones_filtradas) - total_expediciones
 
-        colores = ["#b79ad5", "#68bee2", "#edb04d", "#ed7977"]
+        colores = COLORES_RANGOS
         grafico = go.Figure()
         inicio_catalogo = 0
         inicio_expediciones = 0
@@ -221,7 +227,7 @@ def panel_server(input, output, session):
                 text=[etiqueta if valor >= 8 else "" for valor, etiqueta in zip(porcentajes, etiquetas)],
                 textposition="inside",
                 insidetextanchor="middle",
-                textfont={"color": "#09232b", "size": 15},
+                textfont={"color": TEXTO, "size": 15},
                 hovertemplate=(
                     f"<b>{rango}</b><br>"
                     "%{customdata[0]} registros<br>"
