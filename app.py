@@ -24,9 +24,11 @@ app_ui = ui.page_fluid(
 
 
 def server(input, output, session):
+    evolucion.panel_server("evolucion", expeditions=expeditions)
     calor.panel_server("calor")
     picos.panel_server("picos")
     perfil.panel_server("perfil")
+
     @reactive.effect
     @reactive.event(input.abrir_picos)
     def abrir_picos():
