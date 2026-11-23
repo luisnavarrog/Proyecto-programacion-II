@@ -110,6 +110,7 @@ Luego abre en tu navegador la URL local que muestra la consola (por defecto `htt
 ## Autores
 
 - **Luis Navarro** ([@luisnavarrog](https://github.com/luisnavarrog))
+- **Anjerson Zamora** ([@Lucky-Gauss](https://github.com/Lucky-Gauss))
 - **Scarleth** (GitHub: ____________________)
 - **Fabián** (GitHub: ____________________)
 
