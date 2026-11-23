@@ -4,7 +4,7 @@ import math
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-from shiny import module, render, ui
+from shiny import module, reactive, render, ui
 from src.tema import COLORES_RANGOS, CUADRICULA, GLACIAR, PANEL, TEXTO, aplicar_tema
 
 
@@ -39,6 +39,12 @@ def _top_peaks(expeditions: pd.DataFrame) -> pd.DataFrame:
         .head(10)
         .reset_index(drop=True)
     )
+
+
+def _filter_season(expeditions: pd.DataFrame, season: str) -> pd.DataFrame:
+    if season == "Todas":
+        return expeditions
+    return expeditions.loc[expeditions["season"] == season]
 
 
 def _cumulative_counts(
@@ -122,7 +128,7 @@ def _animated_mountain_figure(
         shared_xaxes=True,
         vertical_spacing=0.16,
         subplot_titles=(
-            "Participaciones exitosas acumuladas",
+            "🏁 Participaciones exitosas acumuladas",
             "💀 Personas fallecidas acumuladas",
         ),
     )
@@ -290,6 +296,21 @@ def _animated_mountain_figure(
 def panel_ui():
     return ui.div(
         ui.h2("¿Cómo cambió la cantidad de expediciones a lo largo del tiempo?"),
+        ui.div(
+            ui.input_select(
+                "temporada",
+                "Filtrar por temporada",
+                choices={
+                    "Todas": "Todas las temporadas",
+                    "Spring": "Primavera",
+                    "Summer": "Verano",
+                    "Autumn": "Otoño",
+                    "Winter": "Invierno",
+                },
+                selected="Todas",
+            ),
+            class_="col-12 col-md-4 mb-3",
+        ),
         ui.card(
             ui.card_header("Top 10 picos"),
             ui.p("Análisis estadístico por pico"),
@@ -305,28 +326,50 @@ def panel_ui():
 
 @module.server
 def panel_server(input, output, session, expeditions: pd.DataFrame):
-    summary = _top_peaks(expeditions)
-    peak_ids = summary["peak_id"].tolist()
-    year_max = int(expeditions["year"].max())
-    year_min = int(expeditions["year"].min())
-    years = list(range(year_min, year_max + 1))
-    cumulative = _cumulative_counts(expeditions, peak_ids, years)
-    visible_threshold = summary["successful_participations"].max() * 0.05
-    year_initial = next(
-        year
-        for year in years
-        if cumulative.loc[year, "successful_participations"].max()
-        >= visible_threshold
-    )
-    animation_years = years[years.index(year_initial) :]
-    successful_max = max(
-        1, math.ceil(summary["successful_participations"].max() * 1.1)
-    )
-    deaths_max = max(1, math.ceil(summary["deaths"].max() * 1.1))
     plotly_js_included = False
+
+    @reactive.calc
+    def datos_temporada():
+        filtered = _filter_season(expeditions, input.temporada())
+        summary = _top_peaks(filtered)
+        if summary.empty:
+            return summary, None, [], None, 1, 1
+
+        valid_years = filtered.dropna(subset=["year"])
+        if valid_years.empty:
+            return summary, None, [], None, 1, 1
+
+        year_min = int(valid_years["year"].min())
+        year_max = int(valid_years["year"].max())
+        years = list(range(year_min, year_max + 1))
+        cumulative = _cumulative_counts(filtered, summary["peak_id"].tolist(), years)
+        visible_threshold = summary["successful_participations"].max() * 0.05
+        year_initial = next(
+            year
+            for year in years
+            if cumulative.loc[year, "successful_participations"].max()
+            >= visible_threshold
+        )
+        animation_years = years[years.index(year_initial) :]
+        successful_max = max(
+            1, math.ceil(summary["successful_participations"].max() * 1.1)
+        )
+        deaths_max = max(1, math.ceil(summary["deaths"].max() * 1.1))
+        return (
+            summary,
+            cumulative,
+            animation_years,
+            year_initial,
+            successful_max,
+            deaths_max,
+        )
 
     @render.ui
     def resumen_picos():
+        summary, *_ = datos_temporada()
+        if summary.empty:
+            return ui.p("No hay expediciones registradas para esta temporada.")
+
         columns = (
             ("peak_id", "Código"),
             ("peak_name", "Pico"),
@@ -367,6 +410,21 @@ def panel_server(input, output, session, expeditions: pd.DataFrame):
     @render.ui
     def animacion():
         nonlocal plotly_js_included
+        (
+            summary,
+            cumulative,
+            animation_years,
+            year_initial,
+            successful_max,
+            deaths_max,
+        ) = datos_temporada()
+        if summary.empty:
+            return ui.p("No hay expediciones registradas para esta temporada.")
+        if cumulative is None:
+            return ui.p(
+                "No hay expediciones con año registrado para esta temporada."
+            )
+
         figure = _animated_mountain_figure(
             summary,
             cumulative,
