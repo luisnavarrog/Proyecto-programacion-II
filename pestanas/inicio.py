@@ -41,7 +41,10 @@ def panel_ui(expeditions, peaks):
                 ),
             ),
             ui.card(
-                ui.p("¿En qué temporadas se usa más oxígeno?", class_="fw-semibold"),
+                ui.p(
+                    "¿Cómo cambian la participación, el éxito, la mortalidad y el uso de oxígeno según el pico, la nacionalidad y el período?",
+                    class_="fw-semibold",
+                ),
                 ui.input_action_button(
                     "abrir_calor", "Ir al Mapa de calor", class_="btn-outline-primary"
                 ),
