@@ -31,7 +31,16 @@ def panel_ui(expeditions, peaks):
         ui.h2("Explora los datos", class_="h4 mt-4"),
         ui.layout_columns(
             ui.card(
-                ui.p("¿Qué montañas concentran más expediciones?", class_="fw-semibold"),
+                ui.p(
+                    "¿Cómo se acumularon las cumbres alcanzadas y las muertes en cada pico a lo largo del tiempo?",
+                    class_="fw-semibold",
+                ),
+                ui.input_action_button(
+                    "abrir_evolucion", "Ir a Evolución", class_="btn-outline-primary"
+                ),
+            ),
+            ui.card(
+                ui.p("¿Cuáles son las montañas más visitadas y a qué altitudes se concentran las expediciones?", class_="fw-semibold"),
                 ui.input_action_button("abrir_picos", "Ir a Picos", class_="btn-outline-primary"),
             ),
             ui.card(
@@ -49,7 +58,7 @@ def panel_ui(expeditions, peaks):
                     "abrir_calor", "Ir al Mapa de calor", class_="btn-outline-primary"
                 ),
             ),
-            col_widths={"sm": (12, 12,12), "md": (4,4,4)},
+            col_widths={"sm": (12, 12, 12, 12), "md": (6, 6, 6, 6)},
         ),
         ui.p(
             "Fuente de datos: Himalayan Database, vía TidyTuesday.",
