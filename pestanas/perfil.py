@@ -25,7 +25,7 @@ def panel_ui():
 
     return ui.layout_sidebar(
         ui.sidebar(
-            ui.input_select("montana", "Montaña", opciones, selected="Todas"),
+            ui.input_select("montana", "Montaña", opciones, selected="Todas las montañas"),
             ui.input_select("temporada",
                              "Temporada",
                              choices={"Todas":"Todas las temporadas", 
@@ -33,7 +33,7 @@ def panel_ui():
                                         "Summer": "Verano",
                                           "Autumn": "Otoño", 
                                           "Winter": "Invierno"}, 
-                                          selected="Todas las temporadas"),
+                                          selected="Todas"),
 
             ui.input_slider("anio", "Años", min=anio_min, max=anio_max, value=(anio_min, anio_max), sep=""),
             ui.help_text("Seleccione una montaña, una temporada y un rango de años para visualizar los datos."),
@@ -51,13 +51,15 @@ def panel_ui():
                     ui.h5("Distribución de edades", class_="text-white fw-bold"),
                     output_widget("grafico_edades"),
                     ui.hr(),
-                    ui.output_ui("nota_edades")
+                    ui.output_ui("nota_edades"),
+                    
                 ),
                 ui.div(
                     ui.h5("Éxito según uso de oxígeno", class_="text-white fw-bold"),
                     output_widget("grafico_oxigeno"),
                     ui.hr(),
-                    ui.output_ui("nota_oxigeno")
+                    ui.output_ui("nota_oxigeno"),
+                    style="border-left: 1px solid rgba(255,255,255,0.18); padding-left: 20px;",
                 ),
                 fill= False,
             ),
@@ -118,6 +120,7 @@ def panel_server(input, output, session):
             font= dict(color= "#FFFFFF"),
             height= 350,
             bargap=0.05, #espacio entre barras
+            barcornerradius=3, #para redondear las barras del histograma
             plot_bgcolor= "rgba(0,0,0,0)", #color de fondo del grafico
             paper_bgcolor= "rgba(0,0,0,0)",
             margin=dict(l=65, r=20, t=15, b=60) #margen izquierdo, derecho, superior e inferior (es el orden en que se colocan los valores)
@@ -180,6 +183,7 @@ def panel_server(input, output, session):
             yaxis=dict(range=[0, 110]),
             font= dict(color= "#FFFFFF"),
             height= 350,
+            barcornerradius=10,#para redondear las barras del grafico
             plot_bgcolor= "rgba(0,0,0,0)",
             paper_bgcolor= "rgba(0,0,0,0)",
             margin= dict(l=65, r=20, t=15, b=60)
@@ -276,12 +280,14 @@ def panel_server(input, output, session):
             if porcentajes[0] > porcentajes[1]:
                 texto_exito = (
                     "El porcentaje de éxito fue mayor entre las participaciones que utilizaron oxígeno, con un "
-                    + str(round(porcentajes[0], 1)).replace(".", ",") + " %."
+                    + str(round(porcentajes[0], 1)).replace(".", ",") + " %, frente a un "
+                    + str(round(porcentajes[1], 1)).replace(".", ",") + " % de las que no lo utilizaron."
                 )
             elif porcentajes[1] > porcentajes[0]:
                 texto_exito = (
                     "El porcentaje de éxito fue mayor entre las participaciones que no utilizaron oxígeno, con un "
-                    + str(round(porcentajes[1], 1)).replace(".", ",") + " %."
+                    + str(round(porcentajes[1], 1)).replace(".", ",") + " %, frente a un "
+                    + str(round(porcentajes[0], 1)).replace(".", ",") + " % de las que sí lo utilizaron."
                 )
             else:
                 texto_exito = (
@@ -305,7 +311,18 @@ def panel_server(input, output, session):
             texto_edad = "No hay edades válidas para estos filtros."
 
         return ui.div(
-            ui.h5("¿Qué muestran los datos?", class_="fw-bold"),
-            ui.p(texto_edad, class_="text-white"),
-            ui.p(texto_exito, class_="text-white"),
+            ui.h5("¿Qué muestran los datos?", class_="mt-3 mb-3"),
+
+            ui.layout_columns(
+                ui.div(
+                    ui.h6("Edades", class_="text-white fw-bold"),
+                    ui.p(texto_edad, class_="small text-white")
+                ),
+                ui.div(
+                    ui.h6("Uso de oxígeno", class_="text-white fw-bold"),
+                    ui.p(texto_exito, class_="small text-white"),
+                    style="border-left: 1px solid rgba(255,255,255,0.18); padding-left: 20px;"
+                ),
+                fill=False
+            )
         )
