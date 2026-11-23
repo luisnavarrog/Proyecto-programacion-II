@@ -28,8 +28,8 @@ La interfaz utiliza un tema oscuro personalizado (`shinyswatch` *darkly* + CSS p
 Las vistas del proyecto se organizan alrededor de estas preguntas:
 
 - **Inicio:** ¿Qué montañas concentran más expediciones? ¿Qué edades predominan y cómo varía el éxito según el uso de oxígeno? ¿En qué temporadas se usa más oxígeno?
-- **Picos:** ¿Cuáles tienen más expediciones? ¿Dónde se concentran las expediciones según el rango de elevación? También permite comparar la elevación y los datos de hasta dos montañas.
-- **Mapa de calor:** ¿En qué temporadas se usa más oxígeno? Los filtros también permiten explorar cómo cambian la tasa de éxito, la mortalidad, el uso de oxígeno o el número de integrantes por pico o nacionalidad y por década o estación.
+- **Picos:** ¿Cuáles son las montañas más visitadas y a que altitudes se encuentran las expediciones? También permite comparar la elevación y los datos de hasta dos montañas.
+- **Mapa de calor:** ¿Cómo cambian la participación, el éxito, la mortalidad y el uso de oxígeno según el pico, la nacionalidad y el periodo?.
 - **Evolución:** ¿Cómo evolucionaron las participaciones exitosas acumuladas y las personas fallecidas en los diez picos con más participaciones exitosas a lo largo de los años? Incluye una tabla resumen y una visualización animada por año.
 - **Perfil y oxígeno:** ¿Cómo se distribuyen las edades registradas y cómo varía el éxito según el uso de oxígeno en diferentes montañas, temporadas y rangos de años?
 
