@@ -1,0 +1,133 @@
+:root {
+    --noche: #0b172a;
+    --panel: #142740;
+    --borde: #365476;
+    --texto: #f2f7ff;
+    --texto-secundario: #b7c9dd;
+    --glaciar: #67dfe8;
+}
+
+body {
+    --bs-body-bg: var(--noche);
+    --bs-body-color: var(--texto);
+    --bs-secondary-color: var(--texto-secundario);
+    --bs-border-color: var(--borde);
+    --bs-primary-rgb: 103, 223, 232;
+    background: var(--noche);
+    color: var(--texto);
+}
+
+.card {
+    --bs-card-bg: var(--panel);
+    --bs-card-border-color: var(--borde);
+    --bs-card-cap-bg: #192e49;
+}
+
+.nav-tabs {
+    --bs-nav-tabs-border-color: var(--borde);
+    --bs-nav-tabs-link-hover-border-color: transparent;
+    --bs-nav-tabs-link-active-color: var(--texto);
+    --bs-nav-tabs-link-active-bg: var(--panel);
+    --bs-nav-tabs-link-active-border-color: var(--borde) var(--borde) var(--panel);
+    padding-top: .65rem;
+}
+
+.nav-tabs .nav-link {
+    --bs-nav-link-color: var(--texto-secundario);
+    --bs-nav-link-hover-color: var(--glaciar);
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--glaciar);
+    --bs-btn-border-color: var(--glaciar);
+    --bs-btn-hover-color: var(--noche);
+    --bs-btn-hover-bg: var(--glaciar);
+    --bs-btn-hover-border-color: var(--glaciar);
+    --bs-btn-focus-shadow-rgb: 103, 223, 232;
+    --bs-btn-active-color: var(--noche);
+    --bs-btn-active-bg: var(--glaciar);
+    --bs-btn-active-border-color: var(--glaciar);
+}
+
+.inicio-portada {
+    display: grid;
+    align-items: center;
+    min-height: clamp(20rem, 33vw, 26rem);
+    padding: clamp(1.25rem, 5vw, 4rem);
+    border: 1px solid var(--borde);
+    border-radius: .85rem;
+    background-color: var(--panel);
+    background-image: linear-gradient(90deg, #0b172ae6, #0b172a73 43%, transparent 75%),
+        url("imagenes/everest-portada.webp");
+    background-position: center, right center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.inicio-presentacion {
+    max-width: 34rem;
+}
+
+.inicio-presentacion .lead {
+    color: var(--texto-secundario);
+}
+
+.inicio-cifras {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 1rem 0 0;
+    padding: 1.15rem 0;
+    background: var(--panel);
+    border: 1px solid var(--borde);
+    border-radius: .85rem;
+    text-align: center;
+}
+
+.inicio-cifras > div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: center;
+    padding: .25rem .75rem;
+}
+
+.inicio-cifras > div + div {
+    border-inline-start: 1px solid var(--borde);
+}
+
+.inicio-cifras dt {
+    color: var(--texto-secundario);
+    font-weight: 500;
+}
+
+.inicio-cifras dd {
+    margin: 0;
+    font-size: clamp(1.5rem, 4vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.25;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 575.98px) {
+    .inicio-portada {
+        align-items: start;
+        min-height: 25rem;
+        background-image: linear-gradient(180deg, var(--noche) 20%, #0b172ab3 49%, transparent 78%),
+            url("imagenes/everest-portada.webp");
+        background-size: cover, auto 74%;
+        background-position: center, 80% bottom;
+    }
+
+    .inicio-cifras {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+
+    .inicio-cifras > div {
+        padding: .75rem;
+    }
+
+    .inicio-cifras > div + div {
+        border-inline-start: 0;
+        border-block-start: 1px solid var(--borde);
+    }
+}

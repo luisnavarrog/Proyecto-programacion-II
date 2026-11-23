@@ -2,3 +2,5 @@ pandas
 plotly
 shiny
 shinywidgets
+jinja2
+shinyswatch
